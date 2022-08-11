@@ -16,6 +16,8 @@ export default function ImageGallery({ params, openModal }) {
       </ul>
    );
 }
+
+
 ImageGallery.propTypes = {
    params: PropTypes.arrayOf(
       PropTypes.shape({
