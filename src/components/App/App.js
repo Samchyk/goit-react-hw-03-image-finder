@@ -11,26 +11,22 @@ import * as Scroll from 'react-scroll';
 class App extends Component {
    state = {
       searchName: ' ',
-      countPage: 1,
-      per_page: 12,
-      ImagesList: [],
+      page: 1,
+      perPage: 12,
+      images: [],
       showModal: false,
-      showLoadMore: false,
       loading: false,
-      openModalItem: { url: '', alt: '' },
+      modal: { url: '', alt: '' },
    };
-
+  
    componentDidUpdate(prevProps, prevState) {
-      const { searchName, per_page, countPage, ImagesList } = this.state;
+      const { searchName, perPage, page, images } = this.state;
 
-      if (
-         prevState.countPage !== countPage ||
-         prevState.searchName !== searchName
-      ) {
+      if (prevState.page !== page || prevState.searchName !== searchName) {
          this.setState({ showLoadMore: false, loading: true });
-         SearchApi(searchName, countPage, per_page)
-            .then(date => {
-               const filterDataHits = date.hits.map(img => {
+         SearchApi(searchName, page, perPage)
+            .then(data => {
+               const filterDataHits = data.hits.map(img => {
                   return Object.fromEntries(
                      Object.entries(img).filter(([key]) =>
                         [
@@ -43,19 +39,19 @@ class App extends Component {
                   );
                });
                this.setState(prev => ({
-                  ImagesList: [...prev.ImagesList, ...filterDataHits],
-                  totalHits: date.totalHits,
+                  images: [...prev.images, ...filterDataHits],
+                  totalHits: data.totalHits,
                   loading: false,
                }));
-               if (date.total !== date.hits.length) {
+               if (data.total !== data.hits.length) {
                   this.setState({ showLoadMore: true });
                }
-               if (countPage === 1) {
+               if (page === 1) {
                   Notiflix.Notify.success(
-                     `Hooray! We found ${date.totalHits} images.`
+                     `Hooray! We found ${data.totalHits} images.`
                   );
                }
-               if (date.total <= ImagesList.length + per_page) {
+               if (data.total <= images.length + perPage) {
                   this.setState({ showLoadMore: false });
                   Notiflix.Notify.info(
                      "We're sorry, but you've reached the end of search results."
@@ -74,19 +70,19 @@ class App extends Component {
 
    onSubmit = name => {
       this.setState(prev =>
-         prev.searchName === name && prev.countPage === 1
-            ? { countPage: 1 }
+         prev.searchName === name && prev.page === 1
+            ? { page: 1 }
             : {
                  searchName: name,
-                 countPage: 1,
-                 ImagesList: [],
+                 page: 1,
+                 images: [],
               }
       );
    };
 
    onloadeMore = () => {
       this.setState(prev => ({
-         countPage: prev.countPage + 1,
+         page: prev.page + 1,
       }));
       this.scrollSlowly();
    };
@@ -98,29 +94,29 @@ class App extends Component {
       Scroll.animateScroll.scrollMore(cardHeight * 2);
    };
    openModal = (url, alt) => {
-      const openModalItem = { url, alt };
+      const modal = { url, alt };
       this.setState({
          showModal: true,
-         openModalItem,
+         modal,
       });
    };
    closeModal = () => {
       this.setState({ showModal: false });
    };
    render() {
-      const { ImagesList, showModal, openModalItem, showLoadMore, loading } =
+      const { images, showModal, modal, showLoadMore, loading } =
          this.state;
       return (
          <div className="App">
             <Searchbar onSubmit={this.onSubmit} />
             {showModal && (
                <Modal
-                  url={openModalItem.url}
-                  alt={openModalItem.alt}
+                  url={modal.url}
+                  alt={modal.alt}
                   onClose={this.closeModal}
                />
             )}
-            <ImageGallery params={ImagesList} openModal={this.openModal} />
+            <ImageGallery images={images} openModal={this.openModal} />
             {loading && <Loader />}
             {showLoadMore && (
                <Button onClick={this.onloadeMore} title="Load more" />
